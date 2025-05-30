@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 
-API_KEY = "977198ba641b4a37a60eb67b1a788e2d"
+API_KEY = os.getenv("ASSEMBLYAI_API_KEY")
 UPLOAD_ENDPOINT = "https://api.assemblyai.com/v2/upload"
 TRANSCRIPT_ENDPOINT = "https://api.assemblyai.com/v2/transcript"
 
