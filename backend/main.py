@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends,UploadFile, File 
+from fastapi import FastAPI, Depends,UploadFile, File, HTTPException 
 from fastapi.responses import JSONResponse
 from uuid import UUID
 import models
@@ -8,6 +8,7 @@ import requests
 import os
 import time
 from fastapi.middleware.cors import CORSMiddleware
+import shutil
 
 app=FastAPI()
 
@@ -50,8 +51,13 @@ def get_db():
 
 # Upload audio file to AssemblyAI
 def upload_audio_to_assemblyai(file: UploadFile):
-    with open("temp_audio_file", "wb") as f:
-        f.write(file.file.read())
+    temp_path = "temp_audio_file"
+
+    with open(temp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    with open(temp_path, "rb") as f:
+        response = requests.post(UPLOAD_ENDPOINT, headers={"authorization": API_KEY}, data=f)
 
     with open("temp_audio_file", "rb") as f:
         response = requests.post(UPLOAD_ENDPOINT, headers={"authorization": API_KEY}, data=f)
@@ -74,9 +80,10 @@ def request_transcription(audio_url: str):
     return response.json()["id"]
 
 # Poll transcription result
-def poll_transcription(transcript_id: str):
+def poll_transcription(transcript_id: str,timeout: int = 300):
     status_url = f"{TRANSCRIPT_ENDPOINT}/{transcript_id}"
-
+    start_time = time.time()
+    
     while True:
         response = requests.get(status_url, headers=HEADERS)
         result = response.json()
@@ -85,6 +92,9 @@ def poll_transcription(transcript_id: str):
             return result
         elif result["status"] == "error":
             raise Exception("Transcription failed:", result["error"])
+
+        if time.time() - start_time > timeout:
+            raise Exception("Polling timed out after 5 minutes")
 
         time.sleep(5) 
 
@@ -105,6 +115,7 @@ async def transcribe_audio(file: UploadFile = File(...), db: Session = Depends(g
     
         # Save to database
         db_input = models.Transcription(
+            id = transcript_id,
             file_name=file.filename,
             text=text,
             utterances=utterances, 
@@ -121,5 +132,7 @@ async def transcribe_audio(file: UploadFile = File(...), db: Session = Depends(g
         })
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        print("Error during transcription:", str(e))
+
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
 
