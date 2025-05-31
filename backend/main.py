@@ -9,7 +9,9 @@ import os
 import time
 from fastapi.middleware.cors import CORSMiddleware
 import shutil
+from dotenv import load_dotenv
 
+load_dotenv()
 app=FastAPI()
 
 origins = [
