@@ -1,5 +1,5 @@
 from database import Base
-from sqlalchemy import Column, Integer, String, JSON, TIMESTAMP, Boolean, text
+from sqlalchemy import Column, String, JSON
 
 
  
