@@ -6,7 +6,9 @@ import { useEffect } from "react";
 function App() {
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch("https://speech-to-text-fastapi-react.onrender.com/ping")
+      fetch("https://speech-to-text-fastapi-react.onrender.com/ping", {
+        method: "GET",
+      })
         .then((res) => res.json())
         .then((data) => console.log("Ping response:", data))
         .catch((err) => console.error("Ping failed:", err));
