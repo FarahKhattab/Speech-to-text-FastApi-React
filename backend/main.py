@@ -37,7 +37,7 @@ HEADERS = {
     "authorization": API_KEY,
 }
 
-@app.get("/ping")
+@app.api_route("/ping", methods=["GET", "HEAD"])
 async def ping():
     print("Ping received")
     return JSONResponse(content={"message": "pong"})
