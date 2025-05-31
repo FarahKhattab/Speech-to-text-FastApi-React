@@ -40,10 +40,13 @@ export default function UploadCard({
       formData.append("file", file);
 
       // Replace with your backend API URL
-      const response = await fetch("http://127.0.0.1:8000/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        "https://speech-to-text-fastapi-react.onrender.com/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Upload failed");
