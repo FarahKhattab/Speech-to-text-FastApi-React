@@ -37,9 +37,10 @@ HEADERS = {
     "authorization": API_KEY,
 }
 
-@app.get("/")
-async def hello():
-    return "Hello World"
+@app.get("/ping")
+async def ping():
+    print("Ping received")
+    return JSONResponse(content={"message": "pong"})
 
 
 models.Base.metadata.create_all(bind=engine)
