@@ -10,6 +10,11 @@ import time
 from fastapi.middleware.cors import CORSMiddleware
 import shutil
 from dotenv import load_dotenv
+import logging
+
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)  # or DEBUG
+logging.getLogger('sqlalchemy.pool').setLevel(logging.DEBUG)
 
 load_dotenv()
 app=FastAPI()
@@ -63,13 +68,10 @@ def upload_audio_to_assemblyai(file: UploadFile):
     with open(temp_path, "rb") as f:
         response = requests.post(UPLOAD_ENDPOINT, headers={"authorization": API_KEY}, data=f)
 
-    with open("temp_audio_file", "rb") as f:
-        response = requests.post(UPLOAD_ENDPOINT, headers={"authorization": API_KEY}, data=f)
-
     os.remove("temp_audio_file")
 
     if response.status_code != 200:
-        raise Exception("Failed to upload audio to AssemblyAI")
+        raise Exception(f"Upload failed: {response.status_code} - {response.text}")
 
     return response.json()["upload_url"]
 
@@ -84,7 +86,7 @@ def request_transcription(audio_url: str):
     return response.json()["id"]
 
 # Poll transcription result
-def poll_transcription(transcript_id: str,timeout: int = 300):
+def poll_transcription(transcript_id: str,timeout: int = 200):
     status_url = f"{TRANSCRIPT_ENDPOINT}/{transcript_id}"
     start_time = time.time()
     
@@ -127,7 +129,6 @@ async def transcribe_audio(file: UploadFile = File(...), db: Session = Depends(g
         
         db.add(db_input)
         db.commit()
-        db.refresh(db_input)
 
         return JSONResponse(content={
             "text": text,
